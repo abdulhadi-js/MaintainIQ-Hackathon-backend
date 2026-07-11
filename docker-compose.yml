@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: maintainiq_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: maintainiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - maintainiq_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: maintainiq_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - maintainiq_net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  maintainiq_net:
+    driver: bridge
