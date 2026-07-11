@@ -1,4 +1,5 @@
 # MaintainIQ Backend
+[![Deploy Backend to AWS](https://github.com/abdulhadi-js/MaintainIQ-Hackathon-backend/actions/workflows/deploy.yml/badge.svg)](https://github.com/abdulhadi-js/MaintainIQ-Hackathon-backend/actions/workflows/deploy.yml)
 
 The backend service for MaintainIQ, built with **NestJS**, **TypeORM**, and **PostgreSQL**. It powers the AI-driven triage system, asset management, and role-based workflows for technicians and supervisors.
 
