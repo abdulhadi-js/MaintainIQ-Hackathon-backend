@@ -1,4 +1,4 @@
-name: Deploy Backend to AWS ECR
+name: Deploy Backend to AWS Lambda
 
 on:
   push:
@@ -6,17 +6,17 @@ on:
       - main
 
 env:
-  AWS_REGION: us-east-1 # Change if needed
-  ECR_REPOSITORY: maintainiq-backend # Change to your ECR repo name
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: maintainiq-backend
 
 jobs:
-  build-and-push:
-    name: Build and Push to AWS ECR
+  build-and-deploy:
+    name: Build, Push to ECR & Deploy to Lambda
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -27,7 +27,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, Tag, and Push Docker Image
         env:
@@ -35,9 +35,8 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          # Also tag as latest
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Deploy to AWS Lambda
@@ -47,4 +46,12 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name MaintainIQ-Backend \
-            --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --region ${{ env.AWS_REGION }}
+
+          # Wait for the update to complete before finishing
+          aws lambda wait function-updated \
+            --function-name MaintainIQ-Backend \
+            --region ${{ env.AWS_REGION }}
+
+          echo "✅ Lambda function deployed successfully!"
